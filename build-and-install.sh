@@ -375,6 +375,17 @@ EOF
   echo "This may take 5-10 minutes..."
   echo ""
 
+  # Check if gradlew exists
+  if [ ! -f "android/gradlew" ]; then
+    echo -e "${RED}Android project not initialized!${NC}"
+    echo ""
+    echo "Please run the initialization script first:"
+    echo "  ./init-project.sh"
+    echo ""
+    echo "This only needs to be done once."
+    exit 1
+  fi
+
   cd android
   ./gradlew clean
   ./gradlew assembleRelease
