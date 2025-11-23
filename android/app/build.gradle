@@ -62,7 +62,7 @@ dependencies {
     implementation project(':react-native-config')
 
     // Stripe Terminal
-    implementation project(':stripe-react-native')
+    implementation project(':stripe_stripe-react-native')
 
     // JSC
     implementation jscFlavor
