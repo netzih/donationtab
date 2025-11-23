@@ -32,8 +32,147 @@ echo ""
 # Create android directory if it doesn't exist
 mkdir -p android/app
 
+# Detect and add Plesk Node.js paths
+echo "Detecting Node.js installation..."
+
+# First, try to auto-detect all Plesk Node.js versions
+if [ -d "/opt/plesk/node" ]; then
+  # Find all node versions, sort by version number (descending)
+  for NODE_DIR in /opt/plesk/node/*/bin; do
+    if [ -d "$NODE_DIR" ] && [ -f "$NODE_DIR/node" ]; then
+      echo "Found Plesk Node.js at: $NODE_DIR"
+      export PATH="$NODE_DIR:$PATH"
+    fi
+  done
+fi
+
+# Also check specific common paths (fallback)
+PLESK_PATHS=(
+  "/opt/plesk/node/23/bin"
+  "/opt/plesk/node/22/bin"
+  "/opt/plesk/node/21/bin"
+  "/opt/plesk/node/20/bin"
+  "/opt/plesk/node/19/bin"
+  "/opt/plesk/node/18/bin"
+)
+
+# Add specific Plesk paths to PATH if they exist
+for PLESK_PATH in "${PLESK_PATHS[@]}"; do
+  if [ -d "$PLESK_PATH" ]; then
+    # Add to PATH if not already there
+    if [[ ":$PATH:" != *":$PLESK_PATH:"* ]]; then
+      export PATH="$PLESK_PATH:$PATH"
+    fi
+  fi
+done
+
+# Check for nvm installations
+if [ -f "$HOME/.nvm/nvm.sh" ]; then
+  echo "Loading nvm..."
+  source "$HOME/.nvm/nvm.sh"
+  nvm use default 2>/dev/null || nvm use node 2>/dev/null || true
+fi
+
+# Function to check if command exists
+command_exists() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+# Function to find Node.js
+find_nodejs() {
+  # Try common locations
+  local node_locations=(
+    "$(command -v node 2>/dev/null)"
+    "/opt/plesk/node/23/bin/node"
+    "/opt/plesk/node/22/bin/node"
+    "/opt/plesk/node/21/bin/node"
+    "/opt/plesk/node/20/bin/node"
+    "/opt/plesk/node/18/bin/node"
+    "/usr/local/bin/node"
+    "/usr/bin/node"
+    "$HOME/.nvm/versions/node/*/bin/node"
+  )
+
+  for node_path in "${node_locations[@]}"; do
+    if [ -f "$node_path" ] && [ -x "$node_path" ]; then
+      echo "$node_path"
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+# Function to find npm
+find_npm() {
+  local npm_locations=(
+    "$(command -v npm 2>/dev/null)"
+    "/opt/plesk/node/23/bin/npm"
+    "/opt/plesk/node/22/bin/npm"
+    "/opt/plesk/node/21/bin/npm"
+    "/opt/plesk/node/20/bin/npm"
+    "/opt/plesk/node/18/bin/npm"
+    "/usr/local/bin/npm"
+    "/usr/bin/npm"
+    "$HOME/.nvm/versions/node/*/bin/npm"
+  )
+
+  for npm_path in "${npm_locations[@]}"; do
+    if [ -f "$npm_path" ] && [ -x "$npm_path" ]; then
+      echo "$npm_path"
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+# Find Node.js
+NODE_CMD=""
+if command_exists node; then
+  NODE_CMD="node"
+else
+  NODE_PATH=$(find_nodejs)
+  if [ -n "$NODE_PATH" ]; then
+    NODE_CMD="$NODE_PATH"
+    export PATH="$(dirname $NODE_PATH):$PATH"
+  fi
+fi
+
+if [ -z "$NODE_CMD" ]; then
+  echo -e "${RED}✗ Node.js not found${NC}"
+  echo ""
+  echo "Please install Node.js 18+ or ensure it's in your PATH"
+  exit 1
+fi
+
+NODE_VERSION=$($NODE_CMD --version)
+echo -e "${GREEN}✓ Node.js installed: $NODE_VERSION${NC}"
+
+# Find npm
+NPM_CMD=""
+if command_exists npm; then
+  NPM_CMD="npm"
+else
+  NPM_PATH=$(find_npm)
+  if [ -n "$NPM_PATH" ]; then
+    NPM_CMD="$NPM_PATH"
+    export PATH="$(dirname $NPM_PATH):$PATH"
+  fi
+fi
+
+if [ -z "$NPM_CMD" ]; then
+  echo -e "${RED}✗ npm not found${NC}"
+  echo "npm should be installed with Node.js"
+  exit 1
+fi
+
+NPM_VERSION=$($NPM_CMD --version)
+echo -e "${GREEN}✓ npm installed: v$NPM_VERSION${NC}"
+
+echo ""
 echo "Installing npm dependencies..."
-npm install
+$NPM_CMD install
 
 echo ""
 echo "Setting up Gradle wrapper..."
