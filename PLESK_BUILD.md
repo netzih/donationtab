@@ -150,20 +150,53 @@ cd ..
 
 ## Java Requirement
 
-Android builds also need Java 11+:
+Android builds also need Java 11+ (includes keytool for signing APKs):
+
+### Quick Install
+
+```bash
+# Use the automated installer
+./install-java.sh
+```
+
+### Manual Install
 
 ```bash
 # Check Java
 java -version
+keytool -help
 
 # Install if needed (Ubuntu/Debian)
 sudo apt update
 sudo apt install openjdk-11-jdk
 
-# Set JAVA_HOME
+# Install on CentOS/RHEL
+sudo yum install java-11-openjdk-devel
+
+# Verify keytool is available
+keytool -help
+```
+
+### Set JAVA_HOME (if needed)
+
+```bash
+# Find Java installation
+update-alternatives --query java
+
+# Set JAVA_HOME (add to ~/.bashrc)
 export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 export PATH=$JAVA_HOME/bin:$PATH
+
+# Reload
+source ~/.bashrc
 ```
+
+### Common Issues
+
+**"keytool: command not found"**
+- Install Java JDK (not just JRE)
+- Run `./install-java.sh` to auto-install
+- Make sure `keytool` is in your PATH
 
 ## Environment Variables for Plesk
 
