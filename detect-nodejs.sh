@@ -27,14 +27,20 @@ fi
 
 # Check Plesk installations
 echo "Checking Plesk paths..."
-for version in 20 19 18 17 16 14; do
-  if [ -f "/opt/plesk/node/$version/bin/node" ]; then
-    echo -e "${GREEN}✓ Found Plesk Node.js $version:${NC}"
-    echo "  Path: /opt/plesk/node/$version/bin/node"
-    echo "  Version: $(/opt/plesk/node/$version/bin/node --version)"
-    echo ""
-  fi
-done
+if [ -d "/opt/plesk/node" ]; then
+  for NODE_DIR in /opt/plesk/node/*/bin/node; do
+    if [ -f "$NODE_DIR" ]; then
+      version=$(basename $(dirname $(dirname $NODE_DIR)))
+      echo -e "${GREEN}✓ Found Plesk Node.js $version:${NC}"
+      echo "  Path: $NODE_DIR"
+      echo "  Version: $($NODE_DIR --version)"
+      echo ""
+    fi
+  done
+else
+  echo "No Plesk Node.js installations found in /opt/plesk/node"
+  echo ""
+fi
 
 # Check vhost paths
 if [ -d "/var/www/vhosts" ]; then
@@ -63,13 +69,19 @@ echo "Recommendations"
 echo "=================================="
 echo ""
 
-# Determine best path
+# Determine best path (prefer latest version)
 BEST_NODE=""
-if [ -f "/opt/plesk/node/20/bin/node" ]; then
-  BEST_NODE="/opt/plesk/node/20/bin/node"
-elif [ -f "/opt/plesk/node/18/bin/node" ]; then
-  BEST_NODE="/opt/plesk/node/18/bin/node"
-elif command -v node >/dev/null 2>&1; then
+
+# Check for latest Plesk versions first
+for version in 23 22 21 20 19 18 17 16 14; do
+  if [ -f "/opt/plesk/node/$version/bin/node" ]; then
+    BEST_NODE="/opt/plesk/node/$version/bin/node"
+    break
+  fi
+done
+
+# Fallback to system node if no Plesk version found
+if [ -z "$BEST_NODE" ] && command -v node >/dev/null 2>&1; then
   BEST_NODE=$(command -v node)
 fi
 

@@ -25,21 +25,35 @@ fi
 # Detect and add Plesk Node.js paths
 echo "Detecting Node.js installation..."
 
-# Common Plesk Node.js installation paths
+# First, try to auto-detect all Plesk Node.js versions
+if [ -d "/opt/plesk/node" ]; then
+  # Find all node versions, sort by version number (descending)
+  for NODE_DIR in /opt/plesk/node/*/bin; do
+    if [ -d "$NODE_DIR" ] && [ -f "$NODE_DIR/node" ]; then
+      echo "Found Plesk Node.js at: $NODE_DIR"
+      export PATH="$NODE_DIR:$PATH"
+    fi
+  done
+fi
+
+# Also check specific common paths (fallback)
 PLESK_PATHS=(
+  "/opt/plesk/node/23/bin"
+  "/opt/plesk/node/22/bin"
+  "/opt/plesk/node/21/bin"
   "/opt/plesk/node/20/bin"
   "/opt/plesk/node/19/bin"
   "/opt/plesk/node/18/bin"
-  "/opt/plesk/node/16/bin"
-  "/opt/plesk/node/14/bin"
   "/usr/local/psa/var/modules/pmmm/node_modules/.bin"
 )
 
-# Add Plesk paths to PATH if they exist
+# Add specific Plesk paths to PATH if they exist
 for PLESK_PATH in "${PLESK_PATHS[@]}"; do
   if [ -d "$PLESK_PATH" ]; then
-    echo "Found Plesk Node.js at: $PLESK_PATH"
-    export PATH="$PLESK_PATH:$PATH"
+    # Add to PATH if not already there
+    if [[ ":$PATH:" != *":$PLESK_PATH:"* ]]; then
+      export PATH="$PLESK_PATH:$PATH"
+    fi
   fi
 done
 
@@ -71,6 +85,9 @@ find_nodejs() {
   # Try common locations
   local node_locations=(
     "$(command -v node 2>/dev/null)"
+    "/opt/plesk/node/23/bin/node"
+    "/opt/plesk/node/22/bin/node"
+    "/opt/plesk/node/21/bin/node"
     "/opt/plesk/node/20/bin/node"
     "/opt/plesk/node/18/bin/node"
     "/usr/local/bin/node"
@@ -92,6 +109,9 @@ find_nodejs() {
 find_npm() {
   local npm_locations=(
     "$(command -v npm 2>/dev/null)"
+    "/opt/plesk/node/23/bin/npm"
+    "/opt/plesk/node/22/bin/npm"
+    "/opt/plesk/node/21/bin/npm"
     "/opt/plesk/node/20/bin/npm"
     "/opt/plesk/node/18/bin/npm"
     "/usr/local/bin/npm"
