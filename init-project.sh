@@ -443,6 +443,35 @@ chmod +x android/gradlew
 
 echo -e "${GREEN}✓ Gradle wrapper created${NC}"
 
+echo ""
+echo "Restoring Android build configuration..."
+
+# Restore Gradle build files from git if they don't exist
+if [ ! -f "android/settings.gradle" ] || [ ! -f "android/build.gradle" ] || [ ! -f "android/gradle.properties" ]; then
+  echo "Checking out Android config files from git..."
+  git checkout android/settings.gradle android/build.gradle android/gradle.properties 2>/dev/null || {
+    echo -e "${YELLOW}⚠ Could not restore files from git, they may not exist yet${NC}"
+  }
+fi
+
+# Check if app/build.gradle exists
+if [ ! -f "android/app/build.gradle" ]; then
+  echo "Checking out app build.gradle from git..."
+  git checkout android/app/build.gradle 2>/dev/null || {
+    echo -e "${YELLOW}⚠ Could not restore android/app/build.gradle from git${NC}"
+  }
+fi
+
+# Check if AndroidManifest.xml exists
+if [ ! -f "android/app/src/main/AndroidManifest.xml" ]; then
+  echo "Checking out Android source files from git..."
+  git checkout android/app/src 2>/dev/null || {
+    echo -e "${YELLOW}⚠ Could not restore android/app/src from git${NC}"
+  }
+fi
+
+echo -e "${GREEN}✓ Android build configuration restored${NC}"
+
 # Verify all files are in place
 echo ""
 echo "Verifying setup..."
@@ -463,6 +492,24 @@ if [ -f "android/gradle/wrapper/gradle-wrapper.properties" ]; then
   echo -e "${GREEN}✓ android/gradle/wrapper/gradle-wrapper.properties${NC}"
 else
   echo -e "${RED}✗ android/gradle/wrapper/gradle-wrapper.properties${NC}"
+fi
+
+if [ -f "android/settings.gradle" ]; then
+  echo -e "${GREEN}✓ android/settings.gradle${NC}"
+else
+  echo -e "${RED}✗ android/settings.gradle${NC}"
+fi
+
+if [ -f "android/build.gradle" ]; then
+  echo -e "${GREEN}✓ android/build.gradle${NC}"
+else
+  echo -e "${RED}✗ android/build.gradle${NC}"
+fi
+
+if [ -f "android/app/build.gradle" ]; then
+  echo -e "${GREEN}✓ android/app/build.gradle${NC}"
+else
+  echo -e "${RED}✗ android/app/build.gradle${NC}"
 fi
 
 echo ""
