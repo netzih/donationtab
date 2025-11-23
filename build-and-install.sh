@@ -186,9 +186,23 @@ NPM_VERSION=$($NPM_CMD --version)
 echo -e "${GREEN}✓ npm installed: v$NPM_VERSION${NC}"
 
 # Check for Java (needed for Android builds)
+JAVA_INSTALLED=false
 if ! command_exists java; then
   echo -e "${YELLOW}⚠ Java not found. You'll need Java 11+ for Android builds${NC}"
-  echo "  Install with: apt install openjdk-11-jdk"
+  echo "  Install with: sudo apt install openjdk-11-jdk"
+else
+  JAVA_INSTALLED=true
+  echo -e "${GREEN}✓ Java installed: $(java -version 2>&1 | head -n 1)${NC}"
+fi
+
+# Check for keytool (needed for signing APKs)
+KEYTOOL_INSTALLED=false
+if ! command_exists keytool; then
+  echo -e "${YELLOW}⚠ keytool not found. You'll need it to sign APKs${NC}"
+  echo "  Install with: sudo apt install openjdk-11-jdk"
+else
+  KEYTOOL_INSTALLED=true
+  echo -e "${GREEN}✓ keytool installed${NC}"
 fi
 
 # Check for adb
@@ -290,6 +304,29 @@ elif [ "$BUILD_OPTION" = "2" ]; then
   # Check if keystore exists
   if [ ! -f "android/app/my-release-key.keystore" ]; then
     echo -e "${YELLOW}⚠ Release keystore not found${NC}"
+
+    # Check if keytool is available
+    if [ "$KEYTOOL_INSTALLED" = false ]; then
+      echo ""
+      echo -e "${RED}ERROR: keytool is required to generate signing keys${NC}"
+      echo ""
+      echo "Please install Java JDK first:"
+      echo ""
+      echo "  Ubuntu/Debian:"
+      echo "    sudo apt update"
+      echo "    sudo apt install openjdk-11-jdk"
+      echo ""
+      echo "  CentOS/RHEL:"
+      echo "    sudo yum install java-11-openjdk-devel"
+      echo ""
+      echo "  Plesk:"
+      echo "    Install via Plesk Panel or use the commands above"
+      echo ""
+      echo "After installing Java, run this script again."
+      echo ""
+      exit 1
+    fi
+
     echo "Generating signing key..."
     echo ""
 
